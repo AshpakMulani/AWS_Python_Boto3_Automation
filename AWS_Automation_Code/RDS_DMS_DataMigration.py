@@ -13,6 +13,12 @@ Script perform below actions.
 Delete List : S3 Bucket, security group, role, policy, option group, DB instance
 Restore command : exec msdb.dbo.rds_restore_database @restore_db_name='Gapsql01' @s3_arn_to_restore_from='arn:aws:s3:::gapsqldbbucket/apr.bak'
 exec msdb.dbo.rds_task_status
+
+git clone https://github.com/AshpakMulani/AWS_Python_Boto3_Automation.git
+git status
+git add <folder/file>
+git commit
+git push/pull
 '''
 
 import RDS_DMS_Functions as function
