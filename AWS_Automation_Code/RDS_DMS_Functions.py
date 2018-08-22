@@ -5,7 +5,6 @@ import json
 iamclient = boto3.client('iam')
 dmsclient = boto3.client('dms')
 
-
 def create_dms_vpc_role(role_name, policy_document):
     response = iamclient.create_role\
     (

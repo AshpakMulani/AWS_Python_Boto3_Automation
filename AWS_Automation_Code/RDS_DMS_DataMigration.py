@@ -131,7 +131,7 @@ except ClientError as e:
 
 
 # =============================================================================
-#  Create replication task. This will start data migration.
+# Create replication task. This will start data migration.
 # =============================================================================
 try:
     print('Creating Replication task....')
