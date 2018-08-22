@@ -12,7 +12,6 @@ s3client = boto3.client('s3')
 
 
 
-
 def create_security_group(security_group_name,vpc_id):
     response = ec2client.create_security_group\
     (
