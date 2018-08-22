@@ -1,24 +1,13 @@
 '''
-Script perform below actions.
-1.  Create S3 bucket and upload .bak file to s3.
-2.  Create a security group for SQL instance with SQL 1433 port open.
-    (SQL DB instance will sit behind this security group.)
-3.  Create a service role for RDS service. This role wii be used to allow access on S3 bucket created in step 1.
-4.  Create IAM policy for S3 bucket access and attach it to service role created in above step, to enable
-    RDS service access S3 bucket.
-5. Create Option Group for DB instance with  option setting SQLSERVER_BACKUP_RESTORE pointing to service role
-    created in step 3.
-6.  Create a DB instance and associate it with option group created in step 5.
+==================== Data migration SQL-SQL using DMS ====================================
+1. Create a DMS service role and attach a policy to enable access to
+    VPC  This policy helps DMS service to add resources in VPC like replicaiton instance, endpoints, replciaiton task
+2. Create a replication instance
+3. Create and configure source and replication endpoints
+4. Create a replication task and start the task using source and target endpoint.
 
-Delete List : S3 Bucket, security group, role, policy, option group, DB instance
-Restore command : exec msdb.dbo.rds_restore_database @restore_db_name='Gapsql01' @s3_arn_to_restore_from='arn:aws:s3:::gapsqldbbucket/apr.bak'
-exec msdb.dbo.rds_task_status
+Before running script, source and target SQL DB has to be in running state.
 
-git clone https://github.com/AshpakMulani/AWS_Python_Boto3_Automation.git
-git status
-git add <folder/file>
-git commit
-git push/pull
 '''
 
 import RDS_DMS_Functions as function
@@ -33,8 +22,8 @@ replication_instance_name = 'myreplciaitoninstance'
 replication_task_name = 'myreplicaitontask'
 source_name='gapsql01.c53u7d8l6zis.us-east-1.rds.amazonaws.com'
 target_name='ec2-52-90-193-243.compute-1.amazonaws.com\AWSGAPSQL01'
-source_endpoint = 'source_endpoint'
-target_endpoint = 'target_endpoint'
+source_endpoint = 'sourceendpoint'
+target_endpoint = 'targetendpoint'
 db_name='gapsql01'
 db_user='sa'
 db_password='Password12'
@@ -65,7 +54,7 @@ table_mapping = \
             "rule-name": "1",
             "object-locator": {
                 "schema-name": "dbo",
-                "table-name": "%projectdeliveries"
+                "table-name": "%projectdeliveries%"
             },
             "rule-action": "include"
 }
@@ -76,47 +65,65 @@ table_mapping = \
 #  Create a DMS service role which will provide access for DMS service on VPC
 # =============================================================================
 try:
+    print("Crating DMS VPC role...")
     function.create_dms_vpc_role(dms_role, policy_document)
+    print("DMS VPC Role created successfully ")
 except ClientError as e:
     print("Error occurred while crating DMS service role : " + e.response['Error']['Message'])
-
-
 
 # =============================================================================
 #  Attach policy to role created above. This will enable DMS to access VPC
 # =============================================================================
 try:
+    print("Attaching VPC access policy to DMS VPS Role...")
     function.attach_policy_role(dms_role, policy_arn)
+    print("Policy attached successfully ")
 except ClientError as e:
     print("Error occurred while attaching policy to role : " + e.response['Error']['Message'])
 
 
 
 # =============================================================================
-#  Create a replciaiton instace
+#  Create a replication instance
 # =============================================================================
 try:
+    print("Creating Replication Instance... ")
     response = function.create_replicaiton_instance(replication_instance_name)
     replicaiton_instance_arn = response['ReplicationInstances'][0]['ReplicationInstanceArn']
-    #documentation of AWs is wrong, it says it returns Dictionary of name 'ReplicaitonInstance'
+    print("Replication Instance created and is in Ready state.")
+    #AWS documentation is incorrect,  it says create_replciaiton_instance returns Dictionary of name 'ReplicaitonInstance'
     #but in reality it returns Disctionary 'ReplciationIstances' with child disctionary containing
     #status of every replciaiton instance. Hence we are choosing [0] which is first instance what we created.
 except ClientError as e:
     print("Error occurred while attaching policy to role : " + e.response['Error']['Message'])
-print('returned from replication instance creation..')
+
 
 # =============================================================================
 #  Create source and target endpoints
 # =============================================================================
 try:
+    print("Creating Source endpoint... ")
     response = function.create_dms_endpoint(source_endpoint, 'source', source_name, db_name, db_user, db_password)
     source_arn = response['Endpoint']['EndpointArn']
+    # This is really important step (check connection & refresh schema)before creating
+    # replication task. This ensures source endpoint can speak to DB and fetches DB schema beforehand.
+    # If we create replication task before testing connection, it wont be able
+    # to fetch schema details from DB and will Fail during migration.
+    print("Source endpoint connection test in progress... ")
+    response = function.test_connection_for_endpoint(replicaiton_instance_arn, source_arn)
+    print("Source endpoint schema refresh in progress... ")
+    response = function.refresh_schema(source_arn, replicaiton_instance_arn)
+    print('Source endpoint is created successfully.')
 except ClientError as e:
-    print("Error occurred while creating source endpoint: " + e.response['Error']['Message'])
+    print("Error occurred while creating and testing source endpoint: " + e.response['Error']['Message'])
 
 try:
+    print("Creating target endpoint... ")
     response = function.create_dms_endpoint(target_endpoint, 'target', target_name, db_name, db_user, db_password)
     target_arn = response['Endpoint']['EndpointArn']
+    print('target endpoint is created successfully.')
+    # No need to test connection for target unlike source, because replication task
+    # does not fetch schema of target while moving data.
 except ClientError as e:
     print("Error occurred while creating target endpoint: " + e.response['Error']['Message'])
 
@@ -124,15 +131,12 @@ except ClientError as e:
 
 
 # =============================================================================
-#  Create replication task
+#  Create replication task. This will start data migration.
 # =============================================================================
 try:
+    print('Creating Replication task....')
     response = function.create_dms_replicaiton_task(replication_task_name, source_arn, target_arn, replicaiton_instance_arn, table_mapping)
+    print('Replication task created and data migration has been started.')
 except ClientError as e:
     print("Error occurred while creating replication task: " + e.response['Error']['Message'])
-
-
-
-
-
 
