@@ -24,7 +24,6 @@ def attach_policy_role(role_name, policy_arn):
 
 
 
-
 def create_replicaiton_instance(instance_name):
     response = dmsclient.create_replication_instance(
         ReplicationInstanceIdentifier= instance_name,
