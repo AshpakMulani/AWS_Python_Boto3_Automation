@@ -81,7 +81,6 @@ def create_dms_endpoint(endpoint_name, type, server_name, db_name, user_name, pa
 
 
 
-
 def test_connection_for_endpoint(replication_instance_arn, endpoint_arn):
     response = dmsclient.test_connection(
         ReplicationInstanceArn=replication_instance_arn,
