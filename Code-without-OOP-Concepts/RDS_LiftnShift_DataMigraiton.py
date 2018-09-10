@@ -50,7 +50,6 @@ except ClientError as e:
     print("Error occurred while uploading file to s3 bucket : " + e.response['Error']['Message'])
 
 
-
 # ======================================================================
 # Create a security group for RDS instance.
 # and open port 1433 to allow SQL DB using management studio.
