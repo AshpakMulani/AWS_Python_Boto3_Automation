@@ -23,7 +23,6 @@ def create_security_group(security_group_name,vpc_id):
     return response
 
 
-
 def security_group_ingress(security_group_id,port,protocol,cidr_block):
     response = ec2client.authorize_security_group_ingress\
     (
