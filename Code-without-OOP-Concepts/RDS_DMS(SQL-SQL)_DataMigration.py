@@ -28,6 +28,7 @@ db_name='gapsql01'
 db_user='sa'
 db_password='Password12'
 
+
 policy_arn = 'arn:aws:iam::aws:policy/service-role/AmazonDMSVPCManagementRole'
 policy_document = \
 {
