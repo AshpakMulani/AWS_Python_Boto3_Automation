@@ -3,7 +3,8 @@ import boto3
 import json
 import time
 import types
-import Core as Core
+import Core as corereference
+import traceback
 
 
 ec2client = boto3.client('ec2')
@@ -20,22 +21,22 @@ dmsclient = boto3.client('dms')
 class IAMCore(abc.ABC):
 
     @abc.abstractmethod
-    def create_role(self, **kwargs):
+    def create_role(**kwargs):
         pass
 
     @abc.abstractmethod
-    def create_policy(self, **kwargs):
+    def create_policy(**kwargs):
         pass
 
     @abc.abstractmethod
-    def attach_policy(self, **kwargs):
+    def attach_policy_to_role(**kwargs):
         pass
 
 
 class IAMClass(IAMCore): #Inheriting from IAMCore class to enforce skeleton.
 
-    @Core.error_handler_decorator
-    def create_role(self, **kwargs):
+    @corereference.Core.error_handler_decorator
+    def create_role(**kwargs):
         '''
         :description : Create IAM Role.
         :param kwargs: rolename=<role_name>, policydocument=<Policy JSON>
@@ -51,8 +52,8 @@ class IAMClass(IAMCore): #Inheriting from IAMCore class to enforce skeleton.
         return response
 
 
-    @Core.error_handler_decorator
-    def create_policy(self, **kwargs):
+    @corereference.Core.error_handler_decorator
+    def create_policy(**kwargs):
         '''
         :description : Create IAM Policy.
         :param kwargs: policyname=<policy name>, description=<policy description>, policydocument=<Policy JSON>
@@ -65,8 +66,8 @@ class IAMClass(IAMCore): #Inheriting from IAMCore class to enforce skeleton.
                 Description=kwargs['description'])
 
 
-    @Core.error_handler_decorator
-    def attach_policy_to_role(self, **kwargs):
+    @corereference.Core.error_handler_decorator
+    def attach_policy_to_role(**kwargs):
         '''
         :description : Attach IAM policy to IAM role.
         :param kwargs: policyarn=<policy ARN>, rolename=<role name to attach give policy>
@@ -85,8 +86,8 @@ class IAMClass(IAMCore): #Inheriting from IAMCore class to enforce skeleton.
 
 class EC2Class():
 
-    @Core.error_handler_decorator
-    def create_security_group(self, security_group_name, vpc_id, description):
+    @corereference.Core.error_handler_decorator
+    def create_security_group(security_group_name, vpc_id, description):
         '''
         :description : Create security group in specified VPC.
         :param : security_group_name, vpc_id, description
@@ -97,8 +98,8 @@ class EC2Class():
 
 
 
-    @Core.error_handler_decorator
-    def create_security_group_ingress(self, security_group_id, port, protocol, cidr_block, description):
+    @corereference.Core.error_handler_decorator
+    def create_security_group_ingress(security_group_id, port, protocol, cidr_block, description):
         '''
         :description : Add inbound rule to security group
         :param : security_group_id, port, protocol, cidr_block, description
@@ -136,7 +137,7 @@ class EC2Class():
 
 class S3Class():
 
-    @Core.error_handler_decorator
+    @corereference.Core.error_handler_decorator
     def create_bucket(bucketname):
         '''
         :description : Create a new public bucket in default region N.virginia
@@ -154,7 +155,7 @@ class S3Class():
         waiter.wait(Bucket=bucketname)
         return response
 
-    @Core.error_handler_decorator
+    @corereference.Core.error_handler_decorator
     def uplaod_file_bucket(filepath, bucketname, filekey):
         '''
         :description : upload file to bucket.
@@ -176,8 +177,8 @@ class S3Class():
 
 class RDSClass():
 
-    @Core.error_handler_decorator
-    def create_SQL_instance(instance_name, security_group_id, dbinstanceclass='db.t2.micro', engine='sqlserver-ex'\
+    @corereference.Core.error_handler_decorator
+    def create_sql_instance(instance_name, security_group_id, dbinstanceclass='db.t2.micro', engine='sqlserver-ex'\
                             , masteruser='sa', masteruserpassword='Password12', availabilityzone='us-east-1d',\
                             engineversion='14.00.3015.40.v1', licensemodel='license-included'):
         '''
@@ -211,9 +212,25 @@ class RDSClass():
                 OptionGroupName=instance_name + '-ex'
 
             )
+
+        # Wait for DB instance to be provisioned.
+        rdswaiter = rdsclient.get_waiter('db_instance_available')
+        rdswaiter.wait \
+                (
+                DBInstanceIdentifier=instance_name,
+                WaiterConfig=
+                {
+                    'Delay': 10,
+                    'MaxAttempts': 500
+                }
+            )
+
         return response
 
-    @Core.error_handler_decorator
+
+
+
+    @corereference.Core.error_handler_decorator
     def create_and_configure_optiongroup(option_group_name, role_arn, enginename='sqlserver-ex',\
                                          engineversion='14.00'):
         '''
@@ -259,7 +276,7 @@ class RDSClass():
 # Creating base class for Data Migration service
 class DMSClass():
 
-    @Core.error_handler_decorator
+    @corereference.Core.error_handler_decorator
     def create_replication_instance(instance_name, instanceclass='dms.t2.micro', availabilityzone='us-east-1d'):
         '''
         :description : create a replication instance for data migration. Repplication instance helps communicate
@@ -314,7 +331,7 @@ class DMSClass():
 
 
 
-    @Core.error_handler_decorator
+    @corereference.Core.error_handler_decorator
     def create_dms_endpoint(endpoint_name, type, server_name, db_name, user_name, password):
         '''
         :description : Function is for creating replication endpoint. For source and target we need to
@@ -340,7 +357,7 @@ class DMSClass():
 
 
 
-    @Core.error_handler_decorator
+    @corereference.Core.error_handler_decorator
     def test_connection_for_endpoint(replication_instance_arn, endpoint_arn):
         '''
         :description : Once replicaiton endpoint is created we need to test connection for replication
@@ -370,7 +387,7 @@ class DMSClass():
 
 
 
-    @Core.error_handler_decorator
+    @corereference.Core.error_handler_decorator
     def refresh_schema(endpoint_arn, replicaiton_instance_arn):
         '''
         :description : Once replication endpoint connection is tested, we nee to refresh DB schema for endpoint.
@@ -399,7 +416,7 @@ class DMSClass():
 
 
 
-    @Core.error_handler_decorator
+    @corereference.Core.error_handler_decorator
     def create_dms_replicaiton_task(task_name, source_arn, target_arn, repliaction_insatance_arn, table_mapping):
         '''
         :description : Final step is to create a replication task which uses source and target endpoints
@@ -441,25 +458,15 @@ class DMSClass():
         return response
 
 
+'''
+Creating dummy/unused main() function in this library because we do not want library to execute on import statement
+in other scripts. With this approach sice this script is not getting executed during import, referring script 
+will not throw error during import in case if there is any error in this script.
+Respective classes and functions will be directly called only when triggered by referencing script.
+'''
 
+def main():
+    pass
 
-
-
-
-
-
-srdsclient = boto3.client('rds')
-dbinstancename =  'gapsql01'
-rdsecuritygroup='RDSLiftnShift'
-rdsvpcrole='rds-vpc-role'
-rds_s3bucket_access_policy = 'RDS_S3_Access_Policy'
-vpc_id = 'vpc-8bfe36f1'
-bucket_name = 'gapsqldbbucket'
-backup_path='C:/Users/ashfaque_mulani/Desktop/APR_2018-08-15_13-00.bak'
-
-ec2 = EC2Class()
-ec2.create_security_group(rdsecuritygroup, vpc_id, 'test security group')
-iam  = IAMClass()
-help(iam.create_policy)
-
-print('done..!!')
+if __name__ == '__main__':
+      main()

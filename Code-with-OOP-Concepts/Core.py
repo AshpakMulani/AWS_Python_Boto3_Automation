@@ -104,3 +104,18 @@ class Core():
 
 
 
+
+
+
+'''
+Creating dummy/unused main() function in this library because we do not want library to execute on import statement
+in other scripts. With this approach sice this script is not getting executed during import, referring script 
+will not throw error during import in case if there is any error in this script.
+Respective classes and functions will be directly called only when triggered by referencing script.
+'''
+
+def main():
+    pass
+
+if __name__ == '__main__':
+    main()
