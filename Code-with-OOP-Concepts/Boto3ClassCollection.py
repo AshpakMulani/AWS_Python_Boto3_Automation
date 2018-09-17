@@ -21,22 +21,22 @@ dmsclient = boto3.client('dms')
 class IAMCore(abc.ABC):
 
     @abc.abstractmethod
-    def create_role(**kwargs):
+    def create_role(self, **kwargs):
         pass
 
     @abc.abstractmethod
-    def create_policy(**kwargs):
+    def create_policy(self, **kwargs):
         pass
 
     @abc.abstractmethod
-    def attach_policy_to_role(**kwargs):
+    def attach_policy_to_role(self, **kwargs):
         pass
 
 
 class IAMClass(IAMCore): #Inheriting from IAMCore class to enforce skeleton.
 
     @corereference.Core.error_handler_decorator
-    def create_role(**kwargs):
+    def create_role(self, **kwargs):
         '''
         :description : Create IAM Role.
         :param kwargs: rolename=<role_name>, policydocument=<Policy JSON>
@@ -53,7 +53,7 @@ class IAMClass(IAMCore): #Inheriting from IAMCore class to enforce skeleton.
 
 
     @corereference.Core.error_handler_decorator
-    def create_policy(**kwargs):
+    def create_policy(self, **kwargs):
         '''
         :description : Create IAM Policy.
         :param kwargs: policyname=<policy name>, description=<policy description>, policydocument=<Policy JSON>
@@ -67,7 +67,7 @@ class IAMClass(IAMCore): #Inheriting from IAMCore class to enforce skeleton.
 
 
     @corereference.Core.error_handler_decorator
-    def attach_policy_to_role(**kwargs):
+    def attach_policy_to_role(self, **kwargs):
         '''
         :description : Attach IAM policy to IAM role.
         :param kwargs: policyarn=<policy ARN>, rolename=<role name to attach give policy>
@@ -87,7 +87,7 @@ class IAMClass(IAMCore): #Inheriting from IAMCore class to enforce skeleton.
 class EC2Class():
 
     @corereference.Core.error_handler_decorator
-    def create_security_group(security_group_name, vpc_id, description):
+    def create_security_group(self, security_group_name, vpc_id, description):
         '''
         :description : Create security group in specified VPC.
         :param : security_group_name, vpc_id, description
@@ -99,7 +99,7 @@ class EC2Class():
 
 
     @corereference.Core.error_handler_decorator
-    def create_security_group_ingress(security_group_id, port, protocol, cidr_block, description):
+    def create_security_group_ingress(self, security_group_id, port, protocol, cidr_block, description):
         '''
         :description : Add inbound rule to security group
         :param : security_group_id, port, protocol, cidr_block, description
@@ -138,7 +138,7 @@ class EC2Class():
 class S3Class():
 
     @corereference.Core.error_handler_decorator
-    def create_bucket(bucketname):
+    def create_bucket(self, bucketname):
         '''
         :description : Create a new public bucket in default region N.virginia
         :param : bucket name
@@ -156,7 +156,7 @@ class S3Class():
         return response
 
     @corereference.Core.error_handler_decorator
-    def uplaod_file_bucket(filepath, bucketname, filekey):
+    def uplaod_file_bucket(self, filepath, bucketname, filekey):
         '''
         :description : upload file to bucket.
         :param : filepath, bucketname, filekey
@@ -178,7 +178,7 @@ class S3Class():
 class RDSClass():
 
     @corereference.Core.error_handler_decorator
-    def create_sql_instance(instance_name, security_group_id, dbinstanceclass='db.t2.micro', engine='sqlserver-ex'\
+    def create_sql_instance(self, instance_name, security_group_id, dbinstanceclass='db.t2.micro', engine='sqlserver-ex'\
                             , masteruser='sa', masteruserpassword='Password12', availabilityzone='us-east-1d',\
                             engineversion='14.00.3015.40.v1', licensemodel='license-included'):
         '''
@@ -231,7 +231,7 @@ class RDSClass():
 
 
     @corereference.Core.error_handler_decorator
-    def create_and_configure_optiongroup(option_group_name, role_arn, enginename='sqlserver-ex',\
+    def create_and_configure_optiongroup(self, option_group_name, role_arn, enginename='sqlserver-ex',\
                                          engineversion='14.00'):
         '''
         :description : create a option group for DB instance. Option group is important for SQL instance to have access
@@ -277,7 +277,7 @@ class RDSClass():
 class DMSClass():
 
     @corereference.Core.error_handler_decorator
-    def create_replication_instance(instance_name, instanceclass='dms.t2.micro', availabilityzone='us-east-1d'):
+    def create_replication_instance(self, instance_name, instanceclass='dms.t2.micro', availabilityzone='us-east-1d'):
         '''
         :description : create a replication instance for data migration. Repplication instance helps communicate
                     DB source and targets using endpoints.
@@ -332,7 +332,7 @@ class DMSClass():
 
 
     @corereference.Core.error_handler_decorator
-    def create_dms_endpoint(endpoint_name, type, server_name, db_name, user_name, password):
+    def create_dms_endpoint(self, endpoint_name, type, server_name, db_name, user_name, password):
         '''
         :description : Function is for creating replication endpoint. For source and target we need to
                         create a separate replication endpoint. Replication task uses replication endpoints
@@ -358,7 +358,7 @@ class DMSClass():
 
 
     @corereference.Core.error_handler_decorator
-    def test_connection_for_endpoint(replication_instance_arn, endpoint_arn):
+    def test_connection_for_endpoint(self, replication_instance_arn, endpoint_arn):
         '''
         :description : Once replicaiton endpoint is created we need to test connection for replication
                         endpoint before creating a replication task. This ensures replication endpoint
@@ -388,7 +388,7 @@ class DMSClass():
 
 
     @corereference.Core.error_handler_decorator
-    def refresh_schema(endpoint_arn, replicaiton_instance_arn):
+    def refresh_schema(self, endpoint_arn, replicaiton_instance_arn):
         '''
         :description : Once replication endpoint connection is tested, we nee to refresh DB schema for endpoint.
                         This step is needed when we create replication endpoint programmatically otherwise
@@ -417,7 +417,7 @@ class DMSClass():
 
 
     @corereference.Core.error_handler_decorator
-    def create_dms_replicaiton_task(task_name, source_arn, target_arn, repliaction_insatance_arn, table_mapping):
+    def create_dms_replicaiton_task(self, task_name, source_arn, target_arn, repliaction_insatance_arn, table_mapping):
         '''
         :description : Final step is to create a replication task which uses source and target endpoints
                         and start data migration process.

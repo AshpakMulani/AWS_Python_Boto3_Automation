@@ -14,7 +14,7 @@ dmsclient = boto3.client('dms')
 
 class CoreWaiter():
     class dms_instance_available_waiter():
-        def wait(**kwargs):
+        def wait(self, **kwargs):
             while 1:
                 time.sleep(10)
                 response = dmsclient.describe_replication_instances(
@@ -33,7 +33,7 @@ class CoreWaiter():
                     return response
 
     class dms_test_endpoint_connection_waiter():
-        def wait(**kwargs):
+        def wait(self, **kwargs):
             while 1:
                 time.sleep(10)
                 response = dmsclient.describe_connections(
@@ -52,7 +52,7 @@ class CoreWaiter():
                     return response
 
     class dms_refresh_schema_waiter():
-        def wait(**kwargs):
+        def wait(self, **kwargs):
             while 1:
                 time.sleep(5)
                 response = dmsclient.describe_refresh_schemas_status(
@@ -63,7 +63,7 @@ class CoreWaiter():
                     return response
 
     class dms_replicaiton_task_ready_waiter():
-        def wait(**kwargs):
+        def wait(self, **kwargs):
             while 1:
                 time.sleep(5)
                 while 1:
@@ -98,9 +98,14 @@ class Core():
         func_with_error_handler.__doc__ = function_to_decorate.__doc__
         return func_with_error_handler
 
-    def get_waiter(*args):
-        if str(type(args[0]) == str(type(boto3.client('dms')))):
-            return getattr(CoreWaiter, 'dms_' + str(args[1]).lower() + '_waiter')
+
+
+    def get_waiter(self, *args):
+        # checking type of calling object and mapping it to respective waiter class from CoreWaiterClass
+        if str(type(self) == str(type(boto3.client('dms')))):
+            return getattr(CoreWaiter, 'dms_' + str(args[0]).lower() + '_waiter')()
+            # getattr only returns attribute of class, in this case waiter class name, so we need to put ' () '
+            # at the end to make ir return a class object.
 
 
 
