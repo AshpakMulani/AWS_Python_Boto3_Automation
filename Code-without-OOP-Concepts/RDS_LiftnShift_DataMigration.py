@@ -36,7 +36,7 @@ bucket_name = 'gapsqldbbucket'
 backup_path='C:/Users/ashfaque_mulani/Desktop/APR_2018-08-15_13-00.bak'
 
 # ======================================================================
-# Create S3 bucket and uplaod DB backup file to bucket.
+# Create S3 bucket and upload DB backup file to bucket.
 # ======================================================================
 try:
     function.create_bucket(bucket_name)
