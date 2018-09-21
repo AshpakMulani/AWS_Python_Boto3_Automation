@@ -1,7 +1,7 @@
 '''
 ==================== Data migration SQL-SQL using DMS ====================================
 1. Create a DMS service role and attach a policy to enable access to
-    VPC  This policy helps DMS service to add resources in VPC like replicaiton instance, endpoints, replciaiton task
+    VPC  This policy helps DMS service to add resources in VPC like replication instance, endpoints, replication task
 2. Create a replication instance
 3. Create and configure source and replication endpoints
 4. Create a replication task and start the task using source and target endpoint.
@@ -93,9 +93,10 @@ try:
     response = function.create_replicaiton_instance(replication_instance_name)
     replicaiton_instance_arn = response['ReplicationInstances'][0]['ReplicationInstanceArn']
     print("Replication Instance created and is in Ready state.")
-    #AWS documentation is incorrect,  it says create_replciaiton_instance returns Dictionary of name 'ReplicaitonInstance'
-    #but in reality it returns Disctionary 'ReplciationIstances' with child disctionary containing
-    #status of every replciaiton instance. Hence we are choosing [0] which is first instance what we created.
+    #AWS documentation is incorrect,  it says create_replicaiton_instance returns Dictionary of name 'ReplicaitonInstance'
+    # but in reality it returns Dictionary 'ReplicationInstances' with child dictionary containing
+    # status of every replication instance. Hence we are choosing [0] which is first instance what we created.
+
 except ClientError as e:
     print("Error occurred while attaching policy to role : " + e.response['Error']['Message'])
 
