@@ -2,6 +2,7 @@ import traceback
 import Boto3ClassCollection as B3CC
 
 
+
 rdspolicydocument = \
     {
         "Version": "2012-10-17",
