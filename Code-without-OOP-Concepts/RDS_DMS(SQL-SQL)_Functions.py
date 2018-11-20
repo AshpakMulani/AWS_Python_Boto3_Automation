@@ -13,14 +13,12 @@ def create_dms_vpc_role(role_name, policy_document):
     )
 
 
-
 def attach_policy_role(role_name, policy_arn):
    response = iamclient.attach_role_policy\
     (
         PolicyArn=policy_arn,
         RoleName=role_name,
     )
-
 
 
 
